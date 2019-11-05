@@ -43,7 +43,7 @@ namespace Altairis.SmsManager.Demo {
             // Send economy message with default settings
             Console.Write("Sending economy message...");
             try {
-                var result = await smsContext.SendAsync("This test message sent via 'Economy' gateway.", phoneNumber, Gateway.Economy);
+                var result = await smsContext.SendAsync("This test message was sent via 'Economy' gateway.", phoneNumber, Gateway.Economy);
                 ShowResult(result);
             }
             catch (Exception ex) {
@@ -54,7 +54,7 @@ namespace Altairis.SmsManager.Demo {
             // Send low-cost message with default settings
             Console.Write("Sending low-cost message...");
             try {
-                var result = await smsContext.SendAsync("This test message sent via 'LowCost' gateway.", phoneNumber, Gateway.LowCost);
+                var result = await smsContext.SendAsync("This test message was sent via 'LowCost' gateway.", phoneNumber, Gateway.LowCost);
                 ShowResult(result);
             }
             catch (Exception ex) {
@@ -75,11 +75,13 @@ namespace Altairis.SmsManager.Demo {
         }
 
         private static void ShowResult(SmsManagerResult result) {
-            if (result.IsSuccess) {
-                Console.WriteLine($"OK, id={result.RequestId}, customid={result.CustomId}");
-            } else {
+            if (!result.IsSuccess) {
                 Console.WriteLine("Failed!");
                 Console.WriteLine($"Error #{result.ErrorCode}: {result.ErrorMessage}");
+            } else if (result is SmsManagerResultSend resultSend) {
+                Console.WriteLine($"OK, id={resultSend.RequestId}, customid={resultSend.CustomId}");
+            } else {
+                Console.WriteLine("OK");
             }
         }
 

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Altairis.SmsManager.Client {
-    public class SmsManagerResult {
+    public abstract class SmsManagerResult {
         private static HttpStatusCode[] KNOWN_STATUS_CODES = {
             HttpStatusCode.OK,
             HttpStatusCode.BadRequest,
@@ -17,12 +17,6 @@ namespace Altairis.SmsManager.Client {
         };
 
         public bool IsSuccess { get; set; }
-
-        public string RequestId { get; set; }
-
-        public IEnumerable<string> PhoneNumbers { get; set; }
-
-        public string CustomId { get; set; }
 
         public HttpStatusCode HttpStatusCode { get; set; }
 
@@ -47,11 +41,11 @@ namespace Altairis.SmsManager.Client {
             }
         }
 
-        internal static async Task<SmsManagerResult> FromHttpWebResponseAsync(HttpWebResponse rp) {
+        internal static async Task<T> FromHttpWebResponseAsync<T>(HttpWebResponse rp) where T : SmsManagerResult, new() {
             if (rp == null) throw new ArgumentNullException(nameof(rp));
 
             // Process API response
-            var result = new SmsManagerResult {
+            var result = new T {
                 HttpStatusCode = rp.StatusCode,
                 HttpStatusDescription = rp.StatusDescription
             };
@@ -72,22 +66,19 @@ namespace Altairis.SmsManager.Client {
         }
 
         protected void ParseResponseText(string responseText) {
-            var data = responseText.Split('|');
-            if (data[0].Equals("OK", StringComparison.Ordinal)) {
-                // Success state
-                this.IsSuccess = true;
-                this.RequestId = data[1];
-                this.PhoneNumbers = data[2].Split(',');
-                if (data.Length == 4) this.CustomId = data[3];
-            } else if (data[0].Equals("ERROR", StringComparison.Ordinal)) {
-                // Expected error
+            if (responseText == null) throw new ArgumentNullException(nameof(responseText));
+            if (string.IsNullOrWhiteSpace(responseText)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(responseText));
+
+            if(responseText.StartsWith("ERROR|", StringComparison.Ordinal)) {
                 this.IsSuccess = false;
-                this.ErrorCode = int.Parse(data[1]);
-            } else {
-                // Unexpected error
-                throw new Exception("Unexpected response from API");
+                this.ErrorCode = int.Parse(responseText.Substring(6));
+                return;
             }
+
+            this.ParseResponseTextInternal(responseText);
         }
+
+        protected abstract void ParseResponseTextInternal(string responseText);
     }
 
 }

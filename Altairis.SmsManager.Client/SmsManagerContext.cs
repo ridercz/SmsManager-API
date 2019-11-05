@@ -38,14 +38,14 @@ namespace Altairis.SmsManager.Client {
 
         // Send message
 
-        public Task<SmsManagerResult> SendAsync(string message, params string[] numbers)
+        public Task<SmsManagerResultSend> SendAsync(string message, params string[] numbers)
             => this.SendAsync(message, numbers, this.DefaultGateway);
 
-        public Task<SmsManagerResult> SendAsync(string message, string number, Gateway gateway, string sender = null, string customId = null, DateTime? time = null, DateTime? expiration = null)
+        public Task<SmsManagerResultSend> SendAsync(string message, string number, Gateway gateway, string sender = null, string customId = null, DateTime? time = null, DateTime? expiration = null)
             => this.SendAsync(message, new[] { number }, gateway, sender, customId, time, expiration);
 
 
-        public Task<SmsManagerResult> SendAsync(string message, IEnumerable<string> numbers, Gateway gateway, string sender = null, string customId = null, DateTime? time = null, DateTime? expiration = null) {
+        public Task<SmsManagerResultSend> SendAsync(string message, IEnumerable<string> numbers, Gateway gateway, string sender = null, string customId = null, DateTime? time = null, DateTime? expiration = null) {
             // Validate arguments
             if (message == null) throw new ArgumentNullException(nameof(message));
             if (string.IsNullOrWhiteSpace(message)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(message));
@@ -74,7 +74,7 @@ namespace Altairis.SmsManager.Client {
 
         // Helper methods
 
-        private async Task<SmsManagerResult> GetResponse(string path) {
+        private async Task<SmsManagerResultSend> GetResponse(string path) {
             if (path == null) throw new ArgumentNullException(nameof(path));
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(path));
 
@@ -96,7 +96,7 @@ namespace Altairis.SmsManager.Client {
             catch (WebException wex) {
                 rp = wex.Response as HttpWebResponse;
             }
-            return await SmsManagerResult.FromHttpWebResponseAsync(rp);
+            return await SmsManagerResult.FromHttpWebResponseAsync<SmsManagerResultSend>(rp);
         }
 
     }
