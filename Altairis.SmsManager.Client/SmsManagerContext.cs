@@ -24,7 +24,7 @@ namespace Altairis.SmsManager.Client {
 
         public string ApiKey { get; set; }
 
-        public Gateway DefaultGateway { get; set; } = Gateway.High;
+        public Gateway DefaultGateway { get; set; } = Gateway.Default;
 
         public string DefaultSender { get; set; }
 
@@ -44,7 +44,6 @@ namespace Altairis.SmsManager.Client {
         public Task<SmsManagerResultSend> SendAsync(string message, string number, Gateway gateway, string sender = null, string customId = null, DateTime? time = null, DateTime? expiration = null)
             => this.SendAsync(message, new[] { number }, gateway, sender, customId, time, expiration);
 
-
         public Task<SmsManagerResultSend> SendAsync(string message, IEnumerable<string> numbers, Gateway gateway, string sender = null, string customId = null, DateTime? time = null, DateTime? expiration = null) {
             // Validate arguments
             if (message == null) throw new ArgumentNullException(nameof(message));
@@ -58,7 +57,7 @@ namespace Altairis.SmsManager.Client {
             var qsb = new StringBuilder($"/Send?apikey={this.ApiKey}");
             qsb.AppendFormat("&number={0}", Uri.EscapeDataString(string.Join(",", numbers)));
             qsb.AppendFormat("&message={0}", Uri.EscapeDataString(message));
-            qsb.AppendFormat("&gateway={0}", Enum.GetName(typeof(Gateway), gateway).ToLower());
+            if (gateway != Gateway.Default) qsb.AppendFormat("&gateway={0}", Enum.GetName(typeof(Gateway), gateway).ToLower());
             if (!string.IsNullOrWhiteSpace(sender)) qsb.AppendFormat("&sender={0}", Uri.EscapeDataString(sender));
             if (!string.IsNullOrWhiteSpace(customId)) qsb.AppendFormat("&customid={0}", customId);
             if (time.HasValue) qsb.AppendFormat("&time={0:s}", time);
