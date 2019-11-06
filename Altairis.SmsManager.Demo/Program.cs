@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Altairis.SmsManager.Client;
+using System.Linq;
 
 namespace Altairis.SmsManager.Demo {
     class Program {
@@ -26,6 +27,37 @@ namespace Altairis.SmsManager.Demo {
             TestGetUserInfoAsync().Wait();
             TestSendAsync(phoneNumber).Wait();
             TestRequestList().Wait();
+            TestGetPrice(phoneNumber).Wait();
+        }
+
+        private static async Task TestGetPrice(string phoneNumber) {
+            var allGateways = Enum.GetValues(typeof(Gateway)).Cast<Gateway>();
+            foreach (var gateway in allGateways) {
+                Console.Write($"Getting price for {gateway} gateway...");
+                try {
+                    var result = await smsContext.GetPriceAsync("TEST", phoneNumber, gateway);
+                    if (result.IsSuccess) {
+                        Console.WriteLine($"{result.Price:N2} CZK");
+                    } else {
+                        Console.WriteLine("Failed!");
+                        Console.WriteLine($"Error #{result.ErrorCode}: {result.ErrorMessage}");
+                    }
+                }
+                catch (Exception ex) {
+                    Console.WriteLine("Failed!");
+                    Console.WriteLine(ex.ToString());
+                }
+            }
+
+            Console.WriteLine("Getting price for complex message using Economy gateway...");
+            try {
+                var result = await smsContext.GetPriceAsync("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", phoneNumber, Gateway.Economy);
+                ShowResult(result);
+            }
+            catch (Exception ex) {
+                Console.WriteLine("Failed!");
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private static async Task TestRequestList() {
@@ -118,6 +150,13 @@ namespace Altairis.SmsManager.Demo {
                     Console.WriteLine($"{item.RequestId,10} | {item.Gateway,-7} | {item.Time,-19:s} | {item.Expiration,-19:s} | {item.Sender,-20} | {item.RemainingRecipients,4} | {item.Status}");
                 }
                 Console.WriteLine(new string('-', Console.WindowWidth - 1));
+            } else if (result is SmsManagerResultPrice resultPrice) {
+                Console.WriteLine("OK");
+                Console.WriteLine($"  Valid recipients: {resultPrice.ValidRecipients}");
+                Console.WriteLine($"  Messages:         {resultPrice.Messages}");
+                Console.WriteLine($"  Characters:       {resultPrice.Characters}");
+                Console.WriteLine($"  Price/message:    {resultPrice.PricePerMessage}");
+                Console.WriteLine($"  Price:            {resultPrice.Price}");
             } else {
                 Console.WriteLine("OK");
             }

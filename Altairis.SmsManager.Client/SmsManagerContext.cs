@@ -71,6 +71,30 @@ namespace Altairis.SmsManager.Client {
             return this.GetResponseAsync<SmsManagerResultSend>(qsb.ToString());
         }
 
+        // Get message price
+
+        public Task<SmsManagerResultPrice> GetPriceAsync(string message, params string[] numbers)
+            => this.GetPriceAsync(message, numbers, Gateway.Default);
+
+        public Task<SmsManagerResultPrice> GetPriceAsync(string message, string number, Gateway gateway)
+            => this.GetPriceAsync(message, new[] { number }, gateway);
+
+        public Task<SmsManagerResultPrice> GetPriceAsync(string message, IEnumerable<string> numbers, Gateway gateway) {
+            // Validate arguments
+            if (message == null) throw new ArgumentNullException(nameof(message));
+            if (string.IsNullOrWhiteSpace(message)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(message));
+            if (!numbers.Any()) throw new ArgumentException("Value cannot be null or empty array.", nameof(numbers));
+
+            // Prepare path with query string
+            var qsb = new StringBuilder($"/GetPrice?apikey={this.ApiKey}");
+            qsb.AppendFormat("&number={0}", Uri.EscapeDataString(string.Join(",", numbers)));
+            qsb.AppendFormat("&message={0}", Uri.EscapeDataString(message));
+            if (gateway != Gateway.Default) qsb.AppendFormat("&gateway={0}", Enum.GetName(typeof(Gateway), gateway).ToLower());
+
+            // Call API and send response
+            return this.GetResponseAsync<SmsManagerResultPrice>(qsb.ToString());
+        }
+
         // Get user info
 
         public Task<SmsManagerResultUserInfo> GetUserInfoAsync()
