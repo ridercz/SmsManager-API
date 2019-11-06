@@ -26,8 +26,8 @@ namespace Altairis.SmsManager.Demo {
 
             TestGetUserInfoAsync().Wait();
             TestSendAsync(phoneNumber).Wait();
-            TestRequestList().Wait();
             TestGetPrice(phoneNumber).Wait();
+            TestRequestList().Wait();
         }
 
         private static async Task TestGetPrice(string phoneNumber) {
@@ -61,15 +61,33 @@ namespace Altairis.SmsManager.Demo {
         }
 
         private static async Task TestRequestList() {
+            SmsManagerResultRequestList requestList;
+
             Console.Write("Getting list of requests...");
             try {
-                var result = await smsContext.RequestListAsync();
+                requestList = await smsContext.RequestListAsync();
+                ShowResult(requestList);
+            }
+            catch (Exception ex) {
+                Console.WriteLine("Failed!");
+                Console.WriteLine(ex.ToString());
+                return;
+            }
+            if (!requestList.Requests.Any()) return;
+
+            //HACK: Disabled due to API bug - always returns empty page
+            /*
+            Console.Write("Requesting status of last message...");
+            try {
+                var lastRequestId = requestList.Requests.First().RequestId;
+                var result = await smsContext.GetRequestStatus(lastRequestId);
                 ShowResult(result);
             }
             catch (Exception ex) {
                 Console.WriteLine("Failed!");
                 Console.WriteLine(ex.ToString());
             }
+            */
         }
 
         private static async Task TestGetUserInfoAsync() {
@@ -134,29 +152,35 @@ namespace Altairis.SmsManager.Demo {
             if (!result.IsSuccess) {
                 Console.WriteLine("Failed!");
                 Console.WriteLine($"Error #{result.ErrorCode}: {result.ErrorMessage}");
-            } else if (result is SmsManagerResultSend resultSend) {
-                Console.WriteLine($"OK, id={resultSend.RequestId}, customid={resultSend.CustomId}");
-            } else if (result is SmsManagerResultUserInfo resultInfo) {
+            } else if (result is SmsManagerResultSend smrs) {
+                Console.WriteLine($"OK, id={smrs.RequestId}, customid={smrs.CustomId}");
+            } else if (result is SmsManagerResultUserInfo smrui) {
                 Console.WriteLine("OK");
-                Console.WriteLine($"  Current credit:  {resultInfo.Credit} CZK");
-                Console.WriteLine($"  Default sender:  {resultInfo.DefaultSender}");
-                Console.WriteLine($"  Default gateway: {resultInfo.DefaultGateway}");
-            } else if (result is SmsManagerResultRequestList resultList) {
-                Console.WriteLine("OK, {0} requests", resultList.Requests.Count);
+                Console.WriteLine($"  Current credit:  {smrui.Credit} CZK");
+                Console.WriteLine($"  Default sender:  {smrui.DefaultSender}");
+                Console.WriteLine($"  Default gateway: {smrui.DefaultGateway}");
+            } else if (result is SmsManagerResultRequestList smrrl) {
+                Console.WriteLine("OK, {0} requests", smrrl.Requests.Count);
                 Console.WriteLine(new string('-', Console.WindowWidth - 1));
                 Console.WriteLine("Request ID | Gateway | Time                | Expiration          | Sender               | Rem. | Status");
                 Console.WriteLine(new string('-', Console.WindowWidth - 1));
-                foreach (var item in resultList.Requests) {
+                foreach (var item in smrrl.Requests) {
                     Console.WriteLine($"{item.RequestId,10} | {item.Gateway,-7} | {item.Time,-19:s} | {item.Expiration,-19:s} | {item.Sender,-20} | {item.RemainingRecipients,4} | {item.Status}");
                 }
                 Console.WriteLine(new string('-', Console.WindowWidth - 1));
-            } else if (result is SmsManagerResultPrice resultPrice) {
+            } else if (result is SmsManagerResultPrice smrp) {
                 Console.WriteLine("OK");
-                Console.WriteLine($"  Valid recipients: {resultPrice.ValidRecipients}");
-                Console.WriteLine($"  Messages:         {resultPrice.Messages}");
-                Console.WriteLine($"  Characters:       {resultPrice.Characters}");
-                Console.WriteLine($"  Price/message:    {resultPrice.PricePerMessage}");
-                Console.WriteLine($"  Price:            {resultPrice.Price}");
+                Console.WriteLine($"  Valid recipients: {smrp.ValidRecipients}");
+                Console.WriteLine($"  Messages:         {smrp.Messages}");
+                Console.WriteLine($"  Characters:       {smrp.Characters}");
+                Console.WriteLine($"  Price/message:    {smrp.PricePerMessage}");
+                Console.WriteLine($"  Price:            {smrp.Price}");
+            } else if(result is SmsManagerResultRequestStatus smrrs) {
+                Console.WriteLine("OK");
+                Console.WriteLine($"  Phone number:      {smrrs.PhoneNumber}");
+                Console.WriteLine($"  Processing status: {smrrs.ProcessingStatus}");
+                Console.WriteLine($"  Expected receipts: {smrrs.ExpectedReceipts}");
+                Console.WriteLine($"  Delivery status:   {smrrs.DeliveryStatus}");
             } else {
                 Console.WriteLine("OK");
             }

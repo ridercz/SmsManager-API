@@ -21,4 +21,16 @@ namespace Altairis.SmsManager.Client {
         Rejected = 7,
         Processing = 9
     }
+
+    public enum DeliveryState {
+        NoReceipt = 0,
+        InTransit = 1,
+        Delivered = 2,
+        Failed = 3,
+        Unknown = 4,
+        Waiting = 5,
+        Expired = 6,
+        InvalidNumber = 7,
+        Error = 8
+    }
 }

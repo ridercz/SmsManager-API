@@ -95,6 +95,16 @@ namespace Altairis.SmsManager.Client {
             return this.GetResponseAsync<SmsManagerResultPrice>(qsb.ToString());
         }
 
+        // Get message status
+
+        public Task<SmsManagerResultRequestStatus> GetRequestStatus(string requestId) {
+            if (requestId == null) throw new ArgumentNullException(nameof(requestId));
+            if (string.IsNullOrWhiteSpace(requestId)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(requestId));
+
+            var path = $"/RequestStatus?apikey={this.ApiKey}&requestid={requestId}";
+            return this.GetResponseAsync<SmsManagerResultRequestStatus>(path);
+        }
+
         // Get user info
 
         public Task<SmsManagerResultUserInfo> GetUserInfoAsync()
@@ -113,6 +123,8 @@ namespace Altairis.SmsManager.Client {
 
             // Construct URI
             var uri = new Uri(this.BaseUri, path);
+
+            Console.WriteLine(uri);
 
             // Prepare HTTP request
             var rq = WebRequest.CreateHttp(uri);
