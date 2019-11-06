@@ -23,9 +23,24 @@ namespace Altairis.SmsManager.Demo {
             // Create client
             smsContext = new SmsManagerContext(apiKey);
 
+            // Get user information
+            TestGetUserInfoAsync().Wait();
+
             // Send SMS
             TestSendAsync(phoneNumber).Wait();
 
+        }
+
+        private static async Task TestGetUserInfoAsync() {
+            Console.Write("Getting user information...");
+            try {
+                var result = await smsContext.GetUserInfoAsync();
+                ShowResult(result);
+            }
+            catch (Exception ex) {
+                Console.WriteLine("Failed!");
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private static async Task TestSendAsync(string phoneNumber) {
@@ -80,6 +95,11 @@ namespace Altairis.SmsManager.Demo {
                 Console.WriteLine($"Error #{result.ErrorCode}: {result.ErrorMessage}");
             } else if (result is SmsManagerResultSend resultSend) {
                 Console.WriteLine($"OK, id={resultSend.RequestId}, customid={resultSend.CustomId}");
+            } else if (result is SmsManagerResultUserInfo resultInfo) {
+                Console.WriteLine("OK");
+                Console.WriteLine($"  Current credit:  {resultInfo.Credit} CZK");
+                Console.WriteLine($"  Default sender:  {resultInfo.DefaultSender}");
+                Console.WriteLine($"  Default gateway: {resultInfo.DefaultGateway}");
             } else {
                 Console.WriteLine("OK");
             }

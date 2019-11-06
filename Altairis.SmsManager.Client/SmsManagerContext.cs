@@ -68,12 +68,17 @@ namespace Altairis.SmsManager.Client {
             }
 
             // Call API and send response
-            return this.GetResponse(qsb.ToString());
+            return this.GetResponse<SmsManagerResultSend>(qsb.ToString());
         }
+
+        // Get user info
+
+        public Task<SmsManagerResultUserInfo> GetUserInfoAsync()
+            => this.GetResponse<SmsManagerResultUserInfo>($"/GetUserInfo?apikey={this.ApiKey}");
 
         // Helper methods
 
-        private async Task<SmsManagerResultSend> GetResponse(string path) {
+        private async Task<T> GetResponse<T>(string path) where T : SmsManagerResult, new() {
             if (path == null) throw new ArgumentNullException(nameof(path));
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(path));
 
@@ -95,7 +100,7 @@ namespace Altairis.SmsManager.Client {
             catch (WebException wex) {
                 rp = wex.Response as HttpWebResponse;
             }
-            return await SmsManagerResult.FromHttpWebResponseAsync<SmsManagerResultSend>(rp);
+            return await SmsManagerResult.FromHttpWebResponseAsync<T>(rp);
         }
 
     }
