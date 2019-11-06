@@ -23,12 +23,21 @@ namespace Altairis.SmsManager.Demo {
             // Create client
             smsContext = new SmsManagerContext(apiKey);
 
-            // Get user information
             TestGetUserInfoAsync().Wait();
-
-            // Send SMS
             TestSendAsync(phoneNumber).Wait();
+            TestRequestList().Wait();
+        }
 
+        private static async Task TestRequestList() {
+            Console.Write("Getting list of requests...");
+            try {
+                var result = await smsContext.RequestListAsync();
+                ShowResult(result);
+            }
+            catch (Exception ex) {
+                Console.WriteLine("Failed!");
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private static async Task TestGetUserInfoAsync() {
@@ -100,6 +109,15 @@ namespace Altairis.SmsManager.Demo {
                 Console.WriteLine($"  Current credit:  {resultInfo.Credit} CZK");
                 Console.WriteLine($"  Default sender:  {resultInfo.DefaultSender}");
                 Console.WriteLine($"  Default gateway: {resultInfo.DefaultGateway}");
+            } else if (result is SmsManagerResultRequestList resultList) {
+                Console.WriteLine("OK, {0} requests", resultList.Requests.Count);
+                Console.WriteLine(new string('-', Console.WindowWidth - 1));
+                Console.WriteLine("Request ID | Gateway | Time                | Expiration          | Sender               | Rem. | Status");
+                Console.WriteLine(new string('-', Console.WindowWidth - 1));
+                foreach (var item in resultList.Requests) {
+                    Console.WriteLine($"{item.RequestId,10} | {item.Gateway,-7} | {item.Time,-19:s} | {item.Expiration,-19:s} | {item.Sender,-20} | {item.RemainingRecipients,4} | {item.Status}");
+                }
+                Console.WriteLine(new string('-', Console.WindowWidth - 1));
             } else {
                 Console.WriteLine("OK");
             }
